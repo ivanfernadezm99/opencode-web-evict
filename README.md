@@ -37,7 +37,7 @@ Flags: `--base-url`, `--idle-minutes` (default 60), `--apply`,
 Cron example (every 6h, dispose dirs idle 6h+):
 
 ```bash
-0 */6 * * * /usr/bin/node /home/servidor/Descargas/opencode-web-evict/src/evict-web.mjs --idle-minutes 360 --apply
+0 */6 * * * /usr/bin/node /media/servidor/d0a196c3-2d36-4431-b15d-8ea078ad8222/opencode-web-evict/src/evict-web.mjs --idle-minutes 360 --apply
 ```
 
 ## Safety
