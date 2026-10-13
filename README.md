@@ -34,11 +34,28 @@ node src/evict-web.mjs --base-url http://127.0.0.1:3333 --idle-minutes 360 --app
 Flags: `--base-url`, `--idle-minutes` (default 60), `--apply`,
 `--protect <dir>` (repeatable), `--json`, `--timeout-ms`.
 
-Cron example (every 6h, dispose dirs idle 6h+):
+## Installed cron (2026-10-13)
 
-```bash
-0 */6 * * * /usr/bin/node /media/servidor/d0a196c3-2d36-4431-b15d-8ea078ad8222/opencode-web-evict/src/evict-web.mjs --idle-minutes 360 --apply
+Runs every 6h on `servidor`'s crontab, disposing directories idle 6h+:
+
+```cron
+0 */6 * * * cd /tmp && /usr/bin/node /media/servidor/d0a196c3-2d36-4431-b15d-8ea078ad8222/opencode-web-evict/src/evict-web.mjs --idle-minutes 360 --apply >> /home/servidor/.local/share/opencode/evict-web.cron.log 2>&1
 ```
+
+The `cd /tmp &&` prefix is load-bearing, not cosmetic. Cron defaults the
+working directory to `$HOME`, and the script always protects its own cwd.
+Without the prefix, cron would run from `/home/servidor` and the cwd guard
+would silently shield the home directory forever, so it could never be
+evicted. Anchoring cwd at `/tmp` makes the protection predictable and leaves
+`$HOME` governed by the idle threshold alone.
+
+`--idle-minutes 360` matches the 6h interval: a directory must be idle for a
+full cycle before it becomes a candidate. stdout/stderr go to
+`~/.local/share/opencode/evict-web.cron.log`; the script's own action log
+stays at `~/.local/share/opencode/evict-web.log`.
+
+`0 */6 * * *` fires at 00:00, 06:00, 12:00 and 18:00. To remove it:
+`crontab -l | grep -v evict-web.mjs | crontab -`.
 
 ## Safety
 
@@ -56,3 +73,8 @@ Cron example (every 6h, dispose dirs idle 6h+):
 - 2026-10-09: first dry-run found 100 sessions across 3 dirs; `--apply`
   disposed `/home/servidor` (idle 1089h) and `/home/servidor/Decargas`
   (idle 440h), left active `/home/servidor/Descargas` untouched, exit 0.
+- 2026-10-13: installed the cron entry — until then the schedule had only
+  ever been an example in this README, never a real crontab line. Validated
+  the command under cron's minimal environment (`env -i`,
+  `PATH=/usr/bin:/bin`) and anchored it at `cd /tmp` so the cwd guard does
+  not shield `$HOME`.
